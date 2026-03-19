@@ -526,12 +526,132 @@ function generateConstraint() {
     return data;
 }
 
+function serializePair(pair) {
+    return {
+        id: pair.id,
+        bodyA: pair.bodyA.id,
+        bodyB: pair.bodyB.id,
+        isActive: pair.isActive,
+        isSensor: pair.isSensor,
+        contactCount: pair.contactCount,
+        separation: pair.separation,
+        inverseMass: pair.inverseMass,
+        friction: pair.friction,
+        frictionStatic: pair.frictionStatic,
+        restitution: pair.restitution,
+        slop: pair.slop,
+        collision: {
+            depth: pair.collision.depth,
+            normal: { x: pair.collision.normal.x, y: pair.collision.normal.y },
+            tangent: { x: pair.collision.tangent.x, y: pair.collision.tangent.y },
+        },
+        contacts: pair.contacts.slice(0, pair.contactCount).map(c => ({
+            vertex: { x: c.vertex.x, y: c.vertex.y },
+            normalImpulse: c.normalImpulse,
+            tangentImpulse: c.tangentImpulse,
+        })),
+    };
+}
+
+function generateEngine() {
+    const data = {};
+
+    // --- Scenario 1: single body freefall (1 tick) ---
+    {
+        const engine = Engine.create();
+        const body = Bodies.rectangle(0, 0, 40, 40);
+        Composite.add(engine.world, body);
+        Engine.update(engine, 1000 / 60);
+        data.engine_freefall_1tick = {
+            bodies: [serializeBody(body)],
+        };
+    }
+
+    // --- Scenario 2: freefall 10 ticks ---
+    {
+        const engine = Engine.create();
+        const body = Bodies.rectangle(0, 0, 40, 40);
+        Composite.add(engine.world, body);
+        const ticks = [];
+        for (let i = 0; i < 10; i++) {
+            Engine.update(engine, 1000 / 60);
+            ticks.push(serializeBody(body));
+        }
+        data.engine_freefall_10ticks = { ticks };
+    }
+
+    // --- Scenario 3: body lands on static floor ---
+    {
+        const engine = Engine.create();
+        const body = Bodies.rectangle(0, 0, 40, 40);
+        const floor = Bodies.rectangle(0, 100, 200, 40, { isStatic: true });
+        Composite.add(engine.world, [body, floor]);
+        const ticks = [];
+        let collisionStartTick = null;
+        Matter.Events.on(engine, 'collisionStart', (e) => {
+            if (collisionStartTick === null) {
+                collisionStartTick = ticks.length;
+            }
+        });
+        for (let i = 0; i < 60; i++) {
+            Engine.update(engine, 1000 / 60);
+            ticks.push(serializeBody(body));
+        }
+        data.engine_floor_collision = {
+            ticks,
+            floor: serializeBody(floor),
+            collisionStartTick,
+        };
+    }
+
+    // --- Scenario 4: two dynamic bodies collide head-on ---
+    {
+        const engine = Engine.create();
+        engine.gravity.y = 0; // no gravity
+        const bodyA = Bodies.rectangle(-50, 0, 40, 40);
+        const bodyB = Bodies.rectangle(50, 0, 40, 40);
+        Body.setVelocity(bodyA, { x: 5, y: 0 });
+        Body.setVelocity(bodyB, { x: -5, y: 0 });
+        Composite.add(engine.world, [bodyA, bodyB]);
+        const ticks = [];
+        for (let i = 0; i < 20; i++) {
+            Engine.update(engine, 1000 / 60);
+            ticks.push({
+                bodyA: serializeBody(bodyA),
+                bodyB: serializeBody(bodyB),
+            });
+        }
+        data.engine_head_on = { ticks };
+    }
+
+    // --- Scenario 5: body with constraint ---
+    {
+        const engine = Engine.create();
+        const body = Bodies.rectangle(0, 0, 40, 40);
+        const constraint = Constraint.create({
+            bodyA: body,
+            pointB: { x: 0, y: 0 },
+            stiffness: 0.5,
+        });
+        Composite.add(engine.world, [body, constraint]);
+        const ticks = [];
+        for (let i = 0; i < 30; i++) {
+            Engine.update(engine, 1000 / 60);
+            ticks.push(serializeBody(body));
+        }
+        data.engine_constraint = { ticks };
+    }
+
+    return data;
+}
+
 // --- Main ---
 
 const geometry = generateGeometry();
 const body = generateBody();
 const collision = generateCollision();
 const constraintData = generateConstraint();
+const engineData = generateEngine();
 fs.writeFileSync(
     path.join(__dirname, 'geometry.json'),
     JSON.stringify(geometry, null, 2)
@@ -549,8 +669,13 @@ fs.writeFileSync(
     path.join(__dirname, 'constraint.json'),
     JSON.stringify(constraintData, null, 2)
 );
+fs.writeFileSync(
+    path.join(__dirname, 'engine.json'),
+    JSON.stringify(engineData, null, 2)
+);
 
 console.log('Generated: testdata/geometry.json');
 console.log('Generated: testdata/body.json');
 console.log('Generated: testdata/collision.json');
 console.log('Generated: testdata/constraint.json');
+console.log('Generated: testdata/engine.json');

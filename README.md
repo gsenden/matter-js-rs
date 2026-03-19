@@ -33,10 +33,10 @@ Every function is tested against Matter.js output:
 
 - [x] **Geometry** — Vec2, Vertices, Bounds, Axes
 - [x] **Body** — Body struct, Verlet integration, set_position/angle/velocity, apply_force, scale
-- [ ] **Composite** — Body/constraint container
-- [ ] **Collision** — SAT detection, contacts, pairs, detector
-- [ ] **Constraint** — Distance/spring constraints
-- [ ] **Engine** — Simulation loop, solver, events
+- [x] **Composite** — Body/constraint container with recursive traversal
+- [x] **Collision** — SAT detection, contacts, pairs, broadphase detector
+- [x] **Constraint** — Distance/spring constraints, Gauss-Siedel solver
+- [ ] **Engine** — Simulation loop, resolver, events
 - [ ] **Factory** — rectangle, circle, polygon builders
 - [ ] **WASM** — wasm-bindgen bindings
 - [ ] **Server** — Authoritative game server with WebSocket

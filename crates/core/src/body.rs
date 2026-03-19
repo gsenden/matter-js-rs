@@ -54,6 +54,7 @@ pub struct Body {
     // Sleep
     pub motion: f64,
     pub sleep_threshold: u32,
+    pub total_contacts: usize,
 
     // Time
     pub time_scale: f64,
@@ -141,6 +142,7 @@ impl Body {
 
             motion: 0.0,
             sleep_threshold: 60,
+            total_contacts: 0,
 
             time_scale: 1.0,
             delta_time: 1000.0 / 60.0,
