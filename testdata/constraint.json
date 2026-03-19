@@ -1,0 +1,636 @@
+{
+  "constraint_defaults": {
+    "length": 100,
+    "stiffness": 1,
+    "damping": 0,
+    "angularStiffness": 0,
+    "pointA": {
+      "x": 0,
+      "y": 0
+    },
+    "pointB": {
+      "x": 0,
+      "y": 0
+    },
+    "angleA": 0,
+    "angleB": 0
+  },
+  "constraint_solve": {
+    "beforeA": {
+      "id": 30,
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "positionPrev": {
+        "x": 0,
+        "y": 0
+      },
+      "velocity": {
+        "x": 0,
+        "y": 0
+      },
+      "force": {
+        "x": 0,
+        "y": 0
+      },
+      "torque": 0,
+      "positionImpulse": {
+        "x": 0,
+        "y": 0
+      },
+      "constraintImpulse": {
+        "x": 0,
+        "y": 0,
+        "angle": 0
+      },
+      "angle": 0,
+      "anglePrev": 0,
+      "angularVelocity": 0,
+      "speed": 0,
+      "angularSpeed": 0,
+      "mass": 1.6,
+      "inverseMass": 0.625,
+      "inertia": 1706.6666666666667,
+      "inverseInertia": 0.0005859375,
+      "density": 0.001,
+      "area": 1600,
+      "isStatic": false,
+      "isSensor": false,
+      "isSleeping": false,
+      "motion": 0,
+      "sleepThreshold": 60,
+      "timeScale": 1,
+      "friction": 0.1,
+      "frictionStatic": 0.5,
+      "frictionAir": 0.01,
+      "restitution": 0,
+      "slop": 0.05,
+      "collisionFilter": {
+        "category": 1,
+        "mask": 4294967295,
+        "group": 0
+      },
+      "parts": [
+        30
+      ],
+      "parent": 30,
+      "vertices": [
+        {
+          "x": -20,
+          "y": -20
+        },
+        {
+          "x": 20,
+          "y": -20
+        },
+        {
+          "x": 20,
+          "y": 20
+        },
+        {
+          "x": -20,
+          "y": 20
+        }
+      ],
+      "axes": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": -1,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "min": {
+          "x": -20,
+          "y": -20
+        },
+        "max": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "circleRadius": 0,
+      "deltaTime": 16.666666666666668
+    },
+    "beforeB": {
+      "id": 31,
+      "position": {
+        "x": 60,
+        "y": 0
+      },
+      "positionPrev": {
+        "x": 60,
+        "y": 0
+      },
+      "velocity": {
+        "x": 0,
+        "y": 0
+      },
+      "force": {
+        "x": 0,
+        "y": 0
+      },
+      "torque": 0,
+      "positionImpulse": {
+        "x": 0,
+        "y": 0
+      },
+      "constraintImpulse": {
+        "x": 0,
+        "y": 0,
+        "angle": 0
+      },
+      "angle": 0,
+      "anglePrev": 0,
+      "angularVelocity": 0,
+      "speed": 0,
+      "angularSpeed": 0,
+      "mass": 1.6,
+      "inverseMass": 0.625,
+      "inertia": 1706.6666666666667,
+      "inverseInertia": 0.0005859375,
+      "density": 0.001,
+      "area": 1600,
+      "isStatic": false,
+      "isSensor": false,
+      "isSleeping": false,
+      "motion": 0,
+      "sleepThreshold": 60,
+      "timeScale": 1,
+      "friction": 0.1,
+      "frictionStatic": 0.5,
+      "frictionAir": 0.01,
+      "restitution": 0,
+      "slop": 0.05,
+      "collisionFilter": {
+        "category": 1,
+        "mask": 4294967295,
+        "group": 0
+      },
+      "parts": [
+        31
+      ],
+      "parent": 31,
+      "vertices": [
+        {
+          "x": 40,
+          "y": -20
+        },
+        {
+          "x": 80,
+          "y": -20
+        },
+        {
+          "x": 80,
+          "y": 20
+        },
+        {
+          "x": 40,
+          "y": 20
+        }
+      ],
+      "axes": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": -1,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "min": {
+          "x": 40,
+          "y": -20
+        },
+        "max": {
+          "x": 80,
+          "y": 20
+        }
+      },
+      "circleRadius": 0,
+      "deltaTime": 16.666666666666668
+    },
+    "afterA": {
+      "id": 30,
+      "position": {
+        "x": 10,
+        "y": 0
+      },
+      "positionPrev": {
+        "x": 0,
+        "y": 0
+      },
+      "velocity": {
+        "x": 0,
+        "y": 0
+      },
+      "force": {
+        "x": 0,
+        "y": 0
+      },
+      "torque": 0,
+      "positionImpulse": {
+        "x": 0,
+        "y": 0
+      },
+      "constraintImpulse": {
+        "x": 10,
+        "y": 0,
+        "angle": 0
+      },
+      "angle": 0,
+      "anglePrev": 0,
+      "angularVelocity": 0,
+      "speed": 0,
+      "angularSpeed": 0,
+      "mass": 1.6,
+      "inverseMass": 0.625,
+      "inertia": 1706.6666666666667,
+      "inverseInertia": 0.0005859375,
+      "density": 0.001,
+      "area": 1600,
+      "isStatic": false,
+      "isSensor": false,
+      "isSleeping": false,
+      "motion": 0,
+      "sleepThreshold": 60,
+      "timeScale": 1,
+      "friction": 0.1,
+      "frictionStatic": 0.5,
+      "frictionAir": 0.01,
+      "restitution": 0,
+      "slop": 0.05,
+      "collisionFilter": {
+        "category": 1,
+        "mask": 4294967295,
+        "group": 0
+      },
+      "parts": [
+        30
+      ],
+      "parent": 30,
+      "vertices": [
+        {
+          "x": -20,
+          "y": -20
+        },
+        {
+          "x": 20,
+          "y": -20
+        },
+        {
+          "x": 20,
+          "y": 20
+        },
+        {
+          "x": -20,
+          "y": 20
+        }
+      ],
+      "axes": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": -1,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "min": {
+          "x": -20,
+          "y": -20
+        },
+        "max": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "circleRadius": 0,
+      "deltaTime": 16.666666666666668
+    },
+    "afterB": {
+      "id": 31,
+      "position": {
+        "x": 50,
+        "y": 0
+      },
+      "positionPrev": {
+        "x": 60,
+        "y": 0
+      },
+      "velocity": {
+        "x": 0,
+        "y": 0
+      },
+      "force": {
+        "x": 0,
+        "y": 0
+      },
+      "torque": 0,
+      "positionImpulse": {
+        "x": 0,
+        "y": 0
+      },
+      "constraintImpulse": {
+        "x": -10,
+        "y": 0,
+        "angle": 0
+      },
+      "angle": 0,
+      "anglePrev": 0,
+      "angularVelocity": 0,
+      "speed": 0,
+      "angularSpeed": 0,
+      "mass": 1.6,
+      "inverseMass": 0.625,
+      "inertia": 1706.6666666666667,
+      "inverseInertia": 0.0005859375,
+      "density": 0.001,
+      "area": 1600,
+      "isStatic": false,
+      "isSensor": false,
+      "isSleeping": false,
+      "motion": 0,
+      "sleepThreshold": 60,
+      "timeScale": 1,
+      "friction": 0.1,
+      "frictionStatic": 0.5,
+      "frictionAir": 0.01,
+      "restitution": 0,
+      "slop": 0.05,
+      "collisionFilter": {
+        "category": 1,
+        "mask": 4294967295,
+        "group": 0
+      },
+      "parts": [
+        31
+      ],
+      "parent": 31,
+      "vertices": [
+        {
+          "x": 40,
+          "y": -20
+        },
+        {
+          "x": 80,
+          "y": -20
+        },
+        {
+          "x": 80,
+          "y": 20
+        },
+        {
+          "x": 40,
+          "y": 20
+        }
+      ],
+      "axes": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": -1,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "min": {
+          "x": 40,
+          "y": -20
+        },
+        "max": {
+          "x": 80,
+          "y": 20
+        }
+      },
+      "circleRadius": 0,
+      "deltaTime": 16.666666666666668
+    },
+    "length": 40,
+    "stiffness": 1
+  },
+  "constraint_spring": {
+    "afterA": {
+      "id": 33,
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "positionPrev": {
+        "x": 0,
+        "y": 0
+      },
+      "velocity": {
+        "x": 0,
+        "y": 0
+      },
+      "force": {
+        "x": 0,
+        "y": 0
+      },
+      "torque": 0,
+      "positionImpulse": {
+        "x": 0,
+        "y": 0
+      },
+      "constraintImpulse": {
+        "x": 0,
+        "y": 0,
+        "angle": 0
+      },
+      "angle": 0,
+      "anglePrev": 0,
+      "angularVelocity": 0,
+      "speed": 0,
+      "angularSpeed": 0,
+      "mass": 1.6,
+      "inverseMass": 0.625,
+      "inertia": 1706.6666666666667,
+      "inverseInertia": 0.0005859375,
+      "density": 0.001,
+      "area": 1600,
+      "isStatic": false,
+      "isSensor": false,
+      "isSleeping": false,
+      "motion": 0,
+      "sleepThreshold": 60,
+      "timeScale": 1,
+      "friction": 0.1,
+      "frictionStatic": 0.5,
+      "frictionAir": 0.01,
+      "restitution": 0,
+      "slop": 0.05,
+      "collisionFilter": {
+        "category": 1,
+        "mask": 4294967295,
+        "group": 0
+      },
+      "parts": [
+        33
+      ],
+      "parent": 33,
+      "vertices": [
+        {
+          "x": -20,
+          "y": -20
+        },
+        {
+          "x": 20,
+          "y": -20
+        },
+        {
+          "x": 20,
+          "y": 20
+        },
+        {
+          "x": -20,
+          "y": 20
+        }
+      ],
+      "axes": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": -1,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "min": {
+          "x": -20,
+          "y": -20
+        },
+        "max": {
+          "x": 20,
+          "y": 20
+        }
+      },
+      "circleRadius": 0,
+      "deltaTime": 16.666666666666668
+    },
+    "afterB": {
+      "id": 34,
+      "position": {
+        "x": 100,
+        "y": 0
+      },
+      "positionPrev": {
+        "x": 100,
+        "y": 0
+      },
+      "velocity": {
+        "x": 0,
+        "y": 0
+      },
+      "force": {
+        "x": 0,
+        "y": 0
+      },
+      "torque": 0,
+      "positionImpulse": {
+        "x": 0,
+        "y": 0
+      },
+      "constraintImpulse": {
+        "x": 0,
+        "y": 0,
+        "angle": 0
+      },
+      "angle": 0,
+      "anglePrev": 0,
+      "angularVelocity": 0,
+      "speed": 0,
+      "angularSpeed": 0,
+      "mass": 1.6,
+      "inverseMass": 0.625,
+      "inertia": 1706.6666666666667,
+      "inverseInertia": 0.0005859375,
+      "density": 0.001,
+      "area": 1600,
+      "isStatic": false,
+      "isSensor": false,
+      "isSleeping": false,
+      "motion": 0,
+      "sleepThreshold": 60,
+      "timeScale": 1,
+      "friction": 0.1,
+      "frictionStatic": 0.5,
+      "frictionAir": 0.01,
+      "restitution": 0,
+      "slop": 0.05,
+      "collisionFilter": {
+        "category": 1,
+        "mask": 4294967295,
+        "group": 0
+      },
+      "parts": [
+        34
+      ],
+      "parent": 34,
+      "vertices": [
+        {
+          "x": 80,
+          "y": -20
+        },
+        {
+          "x": 120,
+          "y": -20
+        },
+        {
+          "x": 120,
+          "y": 20
+        },
+        {
+          "x": 80,
+          "y": 20
+        }
+      ],
+      "axes": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": -1,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "min": {
+          "x": 80,
+          "y": -20
+        },
+        "max": {
+          "x": 120,
+          "y": 20
+        }
+      },
+      "circleRadius": 0,
+      "deltaTime": 16.666666666666668
+    }
+  },
+  "constraint_pin": {
+    "length": 70.71067811865476,
+    "stiffness": 1,
+    "pointA": {
+      "x": 0,
+      "y": 0
+    },
+    "pointB": {
+      "x": 0,
+      "y": 0
+    }
+  }
+}

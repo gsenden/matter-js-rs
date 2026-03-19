@@ -2,7 +2,7 @@ const Matter = require('matter-js');
 const fs = require('fs');
 const path = require('path');
 
-const { Vector, Vertices, Bounds, Axes, Body, Bodies, Composite, Engine, Collision, Detector } = Matter;
+const { Vector, Vertices, Bounds, Axes, Body, Bodies, Composite, Engine, Collision, Detector, Constraint } = Matter;
 
 function generateGeometry() {
     const data = {};
@@ -453,11 +453,85 @@ function generateCollision() {
     return data;
 }
 
+function generateConstraint() {
+    const data = {};
+
+    // Two bodies connected by a rigid constraint
+    const bodyA = Bodies.rectangle(0, 0, 40, 40);
+    const bodyB = Bodies.rectangle(100, 0, 40, 40);
+    const constraint = Constraint.create({
+        bodyA: bodyA,
+        bodyB: bodyB,
+    });
+    data.constraint_defaults = {
+        length: constraint.length,
+        stiffness: constraint.stiffness,
+        damping: constraint.damping,
+        angularStiffness: constraint.angularStiffness,
+        pointA: { x: constraint.pointA.x, y: constraint.pointA.y },
+        pointB: { x: constraint.pointB.x, y: constraint.pointB.y },
+        angleA: constraint.angleA,
+        angleB: constraint.angleB,
+    };
+
+    // Solve a constraint: two bodies pulled together
+    const solveA = Bodies.rectangle(0, 0, 40, 40);
+    const solveB = Bodies.rectangle(60, 0, 40, 40);
+    const solveConstraint = Constraint.create({
+        bodyA: solveA,
+        bodyB: solveB,
+        length: 40, // shorter than distance (60), so should pull together
+        stiffness: 1,
+    });
+    const beforeA = serializeBody(solveA);
+    const beforeB = serializeBody(solveB);
+    Constraint.solve(solveConstraint, 1);
+    data.constraint_solve = {
+        beforeA: beforeA,
+        beforeB: beforeB,
+        afterA: serializeBody(solveA),
+        afterB: serializeBody(solveB),
+        length: solveConstraint.length,
+        stiffness: solveConstraint.stiffness,
+    };
+
+    // Spring constraint (low stiffness)
+    const springA = Bodies.rectangle(0, 0, 40, 40);
+    const springB = Bodies.rectangle(100, 0, 40, 40);
+    const spring = Constraint.create({
+        bodyA: springA,
+        bodyB: springB,
+        stiffness: 0.1,
+        damping: 0.05,
+    });
+    Constraint.solve(spring, 1);
+    data.constraint_spring = {
+        afterA: serializeBody(springA),
+        afterB: serializeBody(springB),
+    };
+
+    // Pin constraint (one body pinned to world point)
+    const pinBody = Bodies.rectangle(50, 50, 40, 40);
+    const pin = Constraint.create({
+        bodyA: pinBody,
+        pointB: { x: 0, y: 0 },
+    });
+    data.constraint_pin = {
+        length: pin.length,
+        stiffness: pin.stiffness,
+        pointA: { x: pin.pointA.x, y: pin.pointA.y },
+        pointB: { x: pin.pointB.x, y: pin.pointB.y },
+    };
+
+    return data;
+}
+
 // --- Main ---
 
 const geometry = generateGeometry();
 const body = generateBody();
 const collision = generateCollision();
+const constraintData = generateConstraint();
 fs.writeFileSync(
     path.join(__dirname, 'geometry.json'),
     JSON.stringify(geometry, null, 2)
@@ -471,6 +545,12 @@ fs.writeFileSync(
     JSON.stringify(collision, null, 2)
 );
 
+fs.writeFileSync(
+    path.join(__dirname, 'constraint.json'),
+    JSON.stringify(constraintData, null, 2)
+);
+
 console.log('Generated: testdata/geometry.json');
 console.log('Generated: testdata/body.json');
 console.log('Generated: testdata/collision.json');
+console.log('Generated: testdata/constraint.json');
