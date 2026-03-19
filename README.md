@@ -10,6 +10,10 @@ Matter.js is embedded in [Phaser](https://phaser.io/) as its default physics eng
 - **WASM build** — drop-in replacement for Matter.js in the browser with better performance
 - **Bit-exact compatibility** — verified against Matter.js output (IEEE 754 f64 precision)
 
+## Demo
+
+[Live demo](https://gsenden.codeberg.page/matter-rs/) — interactive physics scenes running in the browser via WASM.
+
 ## Project structure
 
 ```
