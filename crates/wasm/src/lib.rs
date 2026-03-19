@@ -3,7 +3,7 @@ use matter_core::body::BodyHandle;
 use matter_core::constraint::{Constraint, ConstraintHandle, ConstraintOptions};
 use matter_core::engine::{Engine, Gravity, PhysicsEvent};
 use matter_core::factory::Bodies;
-use matter_core::geometry::Vec2;
+use matter_core::geometry::{Vec2, Vertices};
 use serde::Serialize;
 
 #[wasm_bindgen]
@@ -11,6 +11,13 @@ pub struct PhysicsEngine {
     engine: Engine,
     next_body_id: usize,
     next_constraint_id: usize,
+    mouse_constraint_id: Option<usize>,
+}
+
+#[derive(Serialize)]
+struct Vertex {
+    x: f64,
+    y: f64,
 }
 
 #[derive(Serialize)]
@@ -24,6 +31,9 @@ struct BodyState {
     speed: f64,
     #[serde(rename = "angularVelocity")]
     angular_velocity: f64,
+    #[serde(rename = "isStatic")]
+    is_static: bool,
+    vertices: Vec<Vertex>,
 }
 
 #[derive(Serialize)]
@@ -53,6 +63,7 @@ impl PhysicsEngine {
             engine: Engine::new(),
             next_body_id: 0,
             next_constraint_id: 0,
+            mouse_constraint_id: None,
         }
     }
 
@@ -170,6 +181,8 @@ impl PhysicsEngine {
             vy: b.velocity.y,
             speed: b.speed,
             angular_velocity: b.angular_velocity,
+            is_static: b.is_static,
+            vertices: b.vertices.iter().map(|v| Vertex { x: v.x, y: v.y }).collect(),
         }).collect();
 
         let event_data: Vec<EventData> = events.into_iter().map(|e| match e {
@@ -193,6 +206,60 @@ impl PhysicsEngine {
         };
 
         serde_wasm_bindgen::to_value(&result).unwrap_or(JsValue::NULL)
+    }
+
+    #[wasm_bindgen(js_name = bodyAtPoint)]
+    pub fn body_at_point(&self, x: f64, y: f64) -> i32 {
+        let point = Vec2 { x, y };
+        for body in self.engine.bodies.iter().rev() {
+            if body.is_static {
+                continue;
+            }
+            if Vertices::contains(&body.vertices, &point) {
+                return body.id as i32;
+            }
+        }
+        -1
+    }
+
+    #[wasm_bindgen(js_name = startDrag)]
+    pub fn start_drag(&mut self, body_id: usize, mouse_x: f64, mouse_y: f64) {
+        // Remove existing mouse constraint if any
+        self.end_drag();
+
+        let id = self.next_constraint_id;
+        self.next_constraint_id += 1;
+
+        let constraint = Constraint::new(
+            ConstraintHandle(id),
+            ConstraintOptions {
+                body_a: Some(BodyHandle(body_id)),
+                body_b: None,
+                point_a: None,
+                point_b: Some(Vec2 { x: mouse_x, y: mouse_y }),
+                length: Some(0.01),
+                stiffness: Some(0.1),
+            },
+            &self.engine.bodies,
+        );
+        self.engine.add_constraint(constraint);
+        self.mouse_constraint_id = Some(id);
+    }
+
+    #[wasm_bindgen(js_name = moveDrag)]
+    pub fn move_drag(&mut self, mouse_x: f64, mouse_y: f64) {
+        if let Some(id) = self.mouse_constraint_id
+            && let Some(c) = self.engine.constraints.iter_mut().find(|c| c.handle.0 == id)
+        {
+            c.point_b = Vec2 { x: mouse_x, y: mouse_y };
+        }
+    }
+
+    #[wasm_bindgen(js_name = endDrag)]
+    pub fn end_drag(&mut self) {
+        if let Some(id) = self.mouse_constraint_id.take() {
+            self.engine.constraints.retain(|c| c.handle.0 != id);
+        }
     }
 
     #[wasm_bindgen(js_name = getBodyCount)]
