@@ -1,0 +1,7 @@
+[package]
+name = "matter-server"
+version.workspace = true
+edition = "2024"
+
+[dependencies]
+matter-core = { path = "../core" }

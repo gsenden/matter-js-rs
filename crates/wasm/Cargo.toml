@@ -1,0 +1,10 @@
+[package]
+name = "matter-wasm"
+version.workspace = true
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+matter-core = { path = "../core" }
