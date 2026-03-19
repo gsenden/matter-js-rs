@@ -2,7 +2,7 @@ const Matter = require('matter-js');
 const fs = require('fs');
 const path = require('path');
 
-const { Vector, Vertices, Bounds, Axes, Body, Bodies, Composite, Engine } = Matter;
+const { Vector, Vertices, Bounds, Axes, Body, Bodies, Composite, Engine, Collision, Detector } = Matter;
 
 function generateGeometry() {
     const data = {};
@@ -372,10 +372,92 @@ function generateBody() {
     return data;
 }
 
+function generateCollision() {
+    const data = {};
+
+    // Two overlapping rectangles
+    const bodyA = Bodies.rectangle(0, 0, 40, 40);
+    const bodyB = Bodies.rectangle(30, 0, 40, 40);
+    const collision = Collision.collides(bodyA, bodyB);
+    data.collision_overlap = {
+        bodyA: serializeBody(bodyA),
+        bodyB: serializeBody(bodyB),
+        result: collision ? {
+            collided: collision.collided,
+            depth: collision.depth,
+            normal: { x: collision.normal.x, y: collision.normal.y },
+            tangent: { x: collision.tangent.x, y: collision.tangent.y },
+            penetration: { x: collision.penetration.x, y: collision.penetration.y },
+            supports: collision.supports.slice(0, collision.supportCount).map(s => ({ x: s.x, y: s.y })),
+            supportCount: collision.supportCount,
+        } : null,
+    };
+
+    // Two non-overlapping rectangles
+    const bodyC = Bodies.rectangle(0, 0, 40, 40);
+    const bodyD = Bodies.rectangle(100, 0, 40, 40);
+    const noCollision = Collision.collides(bodyC, bodyD);
+    data.collision_no_overlap = {
+        bodyA: serializeBody(bodyC),
+        bodyB: serializeBody(bodyD),
+        result: noCollision,
+    };
+
+    // Partial vertical overlap
+    const bodyE = Bodies.rectangle(0, 0, 40, 40);
+    const bodyF = Bodies.rectangle(15, 25, 40, 40);
+    const diagonalCollision = Collision.collides(bodyE, bodyF);
+    data.collision_diagonal = {
+        bodyA: serializeBody(bodyE),
+        bodyB: serializeBody(bodyF),
+        result: diagonalCollision ? {
+            collided: diagonalCollision.collided,
+            depth: diagonalCollision.depth,
+            normal: { x: diagonalCollision.normal.x, y: diagonalCollision.normal.y },
+            tangent: { x: diagonalCollision.tangent.x, y: diagonalCollision.tangent.y },
+            penetration: { x: diagonalCollision.penetration.x, y: diagonalCollision.penetration.y },
+            supports: diagonalCollision.supports.slice(0, diagonalCollision.supportCount).map(s => ({ x: s.x, y: s.y })),
+            supportCount: diagonalCollision.supportCount,
+        } : null,
+    };
+
+    // canCollide filter tests
+    data.can_collide = [
+        {
+            filterA: { category: 1, mask: 0xFFFFFFFF, group: 0 },
+            filterB: { category: 1, mask: 0xFFFFFFFF, group: 0 },
+            output: Detector.canCollide({ category: 1, mask: 0xFFFFFFFF, group: 0 }, { category: 1, mask: 0xFFFFFFFF, group: 0 }),
+        },
+        {
+            filterA: { category: 1, mask: 2, group: 0 },
+            filterB: { category: 2, mask: 1, group: 0 },
+            output: Detector.canCollide({ category: 1, mask: 2, group: 0 }, { category: 2, mask: 1, group: 0 }),
+        },
+        {
+            filterA: { category: 1, mask: 0, group: 0 },
+            filterB: { category: 1, mask: 0xFFFFFFFF, group: 0 },
+            output: Detector.canCollide({ category: 1, mask: 0, group: 0 }, { category: 1, mask: 0xFFFFFFFF, group: 0 }),
+        },
+        {
+            filterA: { category: 1, mask: 0xFFFFFFFF, group: 1 },
+            filterB: { category: 1, mask: 0xFFFFFFFF, group: 1 },
+            output: Detector.canCollide({ category: 1, mask: 0xFFFFFFFF, group: 1 }, { category: 1, mask: 0xFFFFFFFF, group: 1 }),
+        },
+        {
+            filterA: { category: 1, mask: 0xFFFFFFFF, group: -1 },
+            filterB: { category: 1, mask: 0xFFFFFFFF, group: -1 },
+            output: Detector.canCollide({ category: 1, mask: 0xFFFFFFFF, group: -1 }, { category: 1, mask: 0xFFFFFFFF, group: -1 }),
+        },
+    ];
+
+    return data;
+}
+
 // --- Main ---
 
 const geometry = generateGeometry();
 const body = generateBody();
+const collision = generateCollision();
 fs.writeFileSync(
     path.join(__dirname, 'geometry.json'),
     JSON.stringify(geometry, null, 2)
@@ -384,6 +466,11 @@ fs.writeFileSync(
     path.join(__dirname, 'body.json'),
     JSON.stringify(body, null, 2)
 );
+fs.writeFileSync(
+    path.join(__dirname, 'collision.json'),
+    JSON.stringify(collision, null, 2)
+);
 
 console.log('Generated: testdata/geometry.json');
 console.log('Generated: testdata/body.json');
+console.log('Generated: testdata/collision.json');
