@@ -645,6 +645,47 @@ function generateEngine() {
     return data;
 }
 
+function generateFactory() {
+    const data = {};
+
+    // rectangle(x, y, width, height)
+    const rect = Bodies.rectangle(50, 80, 100, 60);
+    data.factory_rectangle = serializeBody(rect);
+
+    // rectangle at origin (simplest case)
+    const rectOrigin = Bodies.rectangle(0, 0, 40, 40);
+    data.factory_rectangle_origin = serializeBody(rectOrigin);
+
+    // circle(x, y, radius)
+    const circle10 = Bodies.circle(100, 200, 10);
+    data.factory_circle_r10 = serializeBody(circle10);
+
+    const circle25 = Bodies.circle(0, 0, 25);
+    data.factory_circle_r25 = serializeBody(circle25);
+
+    const circle50 = Bodies.circle(50, 50, 50);
+    data.factory_circle_r50 = serializeBody(circle50);
+
+    // polygon(x, y, sides, radius)
+    const triangle = Bodies.polygon(0, 0, 3, 30);
+    data.factory_triangle = serializeBody(triangle);
+
+    const pentagon = Bodies.polygon(100, 100, 5, 40);
+    data.factory_pentagon = serializeBody(pentagon);
+
+    const hexagon = Bodies.polygon(0, 0, 6, 50);
+    data.factory_hexagon = serializeBody(hexagon);
+
+    // trapezoid(x, y, width, height, slope)
+    const trapezoid = Bodies.trapezoid(0, 0, 100, 50, 0.3);
+    data.factory_trapezoid = serializeBody(trapezoid);
+
+    const trapezoidSteep = Bodies.trapezoid(50, 50, 80, 40, 0.5);
+    data.factory_trapezoid_steep = serializeBody(trapezoidSteep);
+
+    return data;
+}
+
 // --- Main ---
 
 const geometry = generateGeometry();
@@ -652,6 +693,7 @@ const body = generateBody();
 const collision = generateCollision();
 const constraintData = generateConstraint();
 const engineData = generateEngine();
+const factoryData = generateFactory();
 fs.writeFileSync(
     path.join(__dirname, 'geometry.json'),
     JSON.stringify(geometry, null, 2)
@@ -674,8 +716,14 @@ fs.writeFileSync(
     JSON.stringify(engineData, null, 2)
 );
 
+fs.writeFileSync(
+    path.join(__dirname, 'factory.json'),
+    JSON.stringify(factoryData, null, 2)
+);
+
 console.log('Generated: testdata/geometry.json');
 console.log('Generated: testdata/body.json');
 console.log('Generated: testdata/collision.json');
 console.log('Generated: testdata/constraint.json');
 console.log('Generated: testdata/engine.json');
+console.log('Generated: testdata/factory.json');

@@ -37,7 +37,7 @@ Every function is tested against Matter.js output:
 - [x] **Collision** — SAT detection, contacts, pairs, broadphase detector
 - [x] **Constraint** — Distance/spring constraints, Gauss-Siedel solver
 - [x] **Engine** — Simulation loop, resolver, collision events
-- [ ] **Factory** — rectangle, circle, polygon builders
+- [x] **Factory** — rectangle, circle, polygon, trapezoid builders
 - [ ] **WASM** — wasm-bindgen bindings
 - [ ] **Server** — Authoritative game server with WebSocket
 
