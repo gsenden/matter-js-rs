@@ -38,7 +38,7 @@ Every function is tested against Matter.js output:
 - [x] **Constraint** — Distance/spring constraints, Gauss-Siedel solver
 - [x] **Engine** — Simulation loop, resolver, collision events
 - [x] **Factory** — rectangle, circle, polygon, trapezoid builders
-- [ ] **WASM** — wasm-bindgen bindings
+- [x] **WASM** — wasm-bindgen bindings (103KB, TypeScript types)
 - [ ] **Server** — Authoritative game server with WebSocket
 
 ## Building
