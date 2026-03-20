@@ -277,7 +277,7 @@ mod tests {
     use serde_json::Value;
 
     fn load_testdata() -> Value {
-        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../testdata/geometry.json");
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/testdata/geometry.json");
         let content = std::fs::read_to_string(path).expect("Failed to read geometry.json");
         serde_json::from_str(&content).expect("Failed to parse geometry.json")
     }

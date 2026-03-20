@@ -62,13 +62,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "matter-server"
-version = "0.1.0"
-dependencies = [
- "matter-core",
-]
-
-[[package]]
 name = "matter-wasm"
 version = "0.1.0"
 dependencies = [

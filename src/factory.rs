@@ -146,7 +146,7 @@ mod tests {
     const EPSILON: f64 = 1e-10;
 
     fn load_testdata() -> Value {
-        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../testdata/factory.json");
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/testdata/factory.json");
         let content = std::fs::read_to_string(path).expect("Failed to read factory.json");
         serde_json::from_str(&content).expect("Failed to parse factory.json")
     }

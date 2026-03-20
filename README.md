@@ -18,10 +18,8 @@ Matter.js is embedded in [Phaser](https://phaser.io/) as its default physics eng
 
 ```
 matter-rs/
-├── crates/
-│   ├── core/       # Physics engine — pure domain, no I/O
-│   ├── server/     # Authoritative game server (hexagonal architecture)
-│   └── wasm/       # WASM binding (thin wrapper)
+├── src/            # Physics engine library
+├── wasm/           # WASM binding (thin wrapper)
 └── testdata/       # Reference data generated from Matter.js
 ```
 
@@ -43,7 +41,8 @@ Every function is tested against Matter.js output:
 - [x] **Engine** — Simulation loop, resolver, collision events
 - [x] **Factory** — rectangle, circle, polygon, trapezoid builders
 - [x] **WASM** — wasm-bindgen bindings (103KB, TypeScript types)
-- [ ] **Server** — Authoritative game server with WebSocket
+
+See also: [matter-rs-server](https://codeberg.org/gsenden/matter-rs-server) — multiplayer game server using this engine.
 
 ## Building
 
@@ -60,6 +59,15 @@ npm install
 node generate.js
 ```
 
+## Acknowledgements
+
+This project is a port of [Matter.js](https://github.com/liabru/matter-js) by Liam Brummitt, licensed under the MIT License.
+
 ## License
 
-[EUPL-1.2](LICENSE)
+Licensed under either of
+
+- [Apache License, Version 2.0](LICENSE-APACHE)
+- [MIT License](LICENSE-MIT)
+
+at your option.
