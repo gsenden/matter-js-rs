@@ -4,15 +4,30 @@ A Rust port of [Matter.js](https://github.com/liabru/matter-js), the 2D rigid bo
 
 ## Why?
 
-Matter.js is embedded in [Phaser](https://phaser.io/) as its default physics engine. By porting it to Rust, we get:
-
-- **Authoritative game server** — run the same physics on the server as the client, preventing desync
-- **WASM build** — drop-in replacement for Matter.js in the browser with better performance
+- **Pure Rust** — use Matter.js physics in any Rust project, no JavaScript runtime needed
+- **WASM build** — drop-in replacement for Matter.js in the browser
 - **Bit-exact compatibility** — verified against Matter.js output (IEEE 754 f64 precision)
+
+## Compatibility
+
+| matter-rs | Matter.js |
+|-----------|-----------|
+| 0.1.x     | 0.20.x    |
 
 ## Demo
 
 [Live demo](https://gsenden.codeberg.page/matter-rs/) — interactive physics scenes running in the browser via WASM.
+
+## Features
+
+- **Geometry** — Vec2, Vertices, Bounds, Axes
+- **Body** — Verlet integration, forces, collisions, static bodies
+- **Composite** — Body/constraint container with recursive traversal
+- **Collision** — SAT detection, contacts, pairs, broadphase (AABB sweep)
+- **Constraint** — Distance/spring constraints, Gauss-Siedel solver
+- **Engine** — Full simulation loop, resolver, collision events
+- **Factory** — Rectangle, circle, polygon, trapezoid builders
+- **WASM** — wasm-bindgen bindings with TypeScript types
 
 ## Project structure
 
@@ -22,27 +37,6 @@ matter-rs/
 ├── wasm/           # WASM binding (thin wrapper)
 └── testdata/       # Reference data generated from Matter.js
 ```
-
-## Verification
-
-Every function is tested against Matter.js output:
-
-1. `testdata/generate.js` runs scenarios in Matter.js and stores input + output as JSON
-2. Rust tests read the JSON and compare with floating-point precision (relative epsilon 1e-14)
-3. `node testdata/generate.js` regenerates all reference data
-
-## Progress
-
-- [x] **Geometry** — Vec2, Vertices, Bounds, Axes
-- [x] **Body** — Body struct, Verlet integration, set_position/angle/velocity, apply_force, scale
-- [x] **Composite** — Body/constraint container with recursive traversal
-- [x] **Collision** — SAT detection, contacts, pairs, broadphase detector
-- [x] **Constraint** — Distance/spring constraints, Gauss-Siedel solver
-- [x] **Engine** — Simulation loop, resolver, collision events
-- [x] **Factory** — rectangle, circle, polygon, trapezoid builders
-- [x] **WASM** — wasm-bindgen bindings (103KB, TypeScript types)
-
-See also: [matter-rs-server](https://codeberg.org/gsenden/matter-rs-server) — multiplayer game server using this engine.
 
 ## Building
 
@@ -58,6 +52,10 @@ cd testdata
 npm install
 node generate.js
 ```
+
+## Related projects
+
+- [matter-rs-server](https://codeberg.org/gsenden/matter-rs-server) — multiplayer game server with Dioxus frontend, using this engine
 
 ## Acknowledgements
 
