@@ -6,10 +6,17 @@ resolver = "3"
 version = "0.1.0"
 
 [package]
-name = "matter-core"
+name = "matter-js-rs"
 version.workspace = true
 edition = "2024"
+description = "A Rust port of Matter.js, the 2D rigid body physics engine"
 license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://codeberg.org/gsenden/matter-js-rs"
+homepage = "https://codeberg.org/gsenden/matter-js-rs"
+documentation = "https://docs.rs/matter-js-rs"
+keywords = ["physics", "2d", "matterjs", "gamedev"]
+categories = ["game-development", "simulation", "wasm"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }

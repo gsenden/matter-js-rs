@@ -1,9 +1,9 @@
 use wasm_bindgen::prelude::*;
-use matter_core::body::BodyHandle;
-use matter_core::constraint::{Constraint, ConstraintHandle, ConstraintOptions};
-use matter_core::engine::{Engine, Gravity, PhysicsEvent};
-use matter_core::factory::Bodies;
-use matter_core::geometry::{Vec2, Vertices};
+use matter_js_rs::body::BodyHandle;
+use matter_js_rs::constraint::{Constraint, ConstraintHandle, ConstraintOptions};
+use matter_js_rs::engine::{Engine, Gravity, PhysicsEvent};
+use matter_js_rs::factory::Bodies;
+use matter_js_rs::geometry::{Vec2, Vertices};
 use serde::Serialize;
 
 #[wasm_bindgen]

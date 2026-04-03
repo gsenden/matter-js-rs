@@ -1,4 +1,4 @@
-# matter-rs
+# matter-js-rs
 
 A Rust port of [Matter.js](https://github.com/liabru/matter-js), the 2D rigid body physics engine.
 
@@ -10,13 +10,13 @@ A Rust port of [Matter.js](https://github.com/liabru/matter-js), the 2D rigid bo
 
 ## Compatibility
 
-| matter-rs | Matter.js |
+| matter-js-rs | Matter.js |
 |-----------|-----------|
 | 0.1.x     | 0.20.x    |
 
 ## Demo
 
-[Live demo](https://gsenden.codeberg.page/matter-rs/) — interactive physics scenes running in the browser via WASM.
+[Live demo](https://gsenden.codeberg.page/matter-js-rs/) — interactive physics scenes running in the browser via WASM.
 
 ## Features
 
@@ -29,10 +29,19 @@ A Rust port of [Matter.js](https://github.com/liabru/matter-js), the 2D rigid bo
 - **Factory** — Rectangle, circle, polygon, trapezoid builders
 - **WASM** — wasm-bindgen bindings with TypeScript types
 
+## Usage
+
+```rust
+use matter_js_rs::engine::Engine;
+
+let mut engine = Engine::default();
+engine.update(1000.0 / 60.0);
+```
+
 ## Project structure
 
 ```
-matter-rs/
+matter-js-rs/
 ├── src/            # Physics engine library
 ├── wasm/           # WASM binding (thin wrapper)
 └── testdata/       # Reference data generated from Matter.js
@@ -52,10 +61,6 @@ cd testdata
 npm install
 node generate.js
 ```
-
-## Related projects
-
-- [matter-rs-server](https://codeberg.org/gsenden/matter-rs-server) — multiplayer game server with Dioxus frontend, using this engine
 
 ## Acknowledgements
 

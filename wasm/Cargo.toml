@@ -2,12 +2,13 @@
 name = "matter-wasm"
 version.workspace = true
 edition = "2024"
+publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-matter-core = { path = ".." }
+matter-js-rs = { path = ".." }
 wasm-bindgen = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
