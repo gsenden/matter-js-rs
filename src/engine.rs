@@ -1,7 +1,7 @@
 use crate::body::Body;
 use crate::collision::{CollisionResult, Detector, Pairs};
 use crate::constraint::Constraint;
-use crate::geometry::{Vertices, Bounds};
+use crate::geometry::{Bounds, Vec2, Vertices};
 
 const BASE_DELTA: f64 = 1000.0 / 60.0;
 
@@ -46,10 +46,53 @@ impl Default for Timing {
 // --- Events ---
 
 #[derive(Debug, Clone)]
+pub struct CollisionEventPair {
+    /// Parent body id of the first body in the pair.
+    pub body_a: usize,
+    /// Parent body id of the second body in the pair.
+    pub body_b: usize,
+    /// Collision normal in pair order.
+    ///
+    /// The normal points in the separation direction applied to `body_a`.
+    /// `body_b` is separated along the opposite direction.
+    pub normal: Vec2,
+}
+
+#[derive(Debug, Clone)]
 pub enum PhysicsEvent {
-    CollisionStart { pairs: Vec<(usize, usize)> },
-    CollisionActive { pairs: Vec<(usize, usize)> },
-    CollisionEnd { pairs: Vec<(usize, usize)> },
+    CollisionStart { pairs: Vec<CollisionEventPair> },
+    CollisionActive { pairs: Vec<CollisionEventPair> },
+    CollisionEnd { pairs: Vec<CollisionEventPair> },
+}
+
+// --- Collision Response Hook ---
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CollisionResponsePolicy {
+    Default,
+    /// Keep Matter collision detection and separation, but skip Matter's
+    /// velocity response for this pair.
+    SkipVelocity,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CollisionHookPair {
+    pub body_a: usize,
+    pub body_b: usize,
+}
+
+/// Hook for pair-specific collision response policy during `Engine::update()`.
+pub trait CollisionResponseHook {
+    fn response_for_pair(&mut self, pair: CollisionHookPair) -> CollisionResponsePolicy;
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct NoCollisionResponseHook;
+
+impl CollisionResponseHook for NoCollisionResponseHook {
+    fn response_for_pair(&mut self, _pair: CollisionHookPair) -> CollisionResponsePolicy {
+        CollisionResponsePolicy::Default
+    }
 }
 
 // --- Resolver ---
@@ -160,6 +203,9 @@ impl Resolver {
             if !pair.is_active || pair.is_sensor {
                 continue;
             }
+            if pair.collision_response_policy == CollisionResponsePolicy::SkipVelocity {
+                continue;
+            }
             let collision = &pair.collision;
             let normal = collision.normal;
             let tangent = collision.tangent;
@@ -210,6 +256,9 @@ impl Resolver {
 
         for pair in pairs.table.values_mut() {
             if !pair.is_active || pair.is_sensor {
+                continue;
+            }
+            if pair.collision_response_policy == CollisionResponsePolicy::SkipVelocity {
                 continue;
             }
             let normal_x = pair.collision.normal.x;
@@ -344,8 +393,7 @@ impl Resolver {
 
 // --- Engine ---
 
-#[derive(Debug)]
-pub struct Engine {
+pub struct Engine<H: CollisionResponseHook = NoCollisionResponseHook> {
     pub bodies: Vec<Body>,
     pub constraints: Vec<Constraint>,
     pub pairs: Pairs,
@@ -354,16 +402,17 @@ pub struct Engine {
     pub position_iterations: usize,
     pub velocity_iterations: usize,
     pub constraint_iterations: usize,
+    collision_response_hook: H,
 }
 
-impl Default for Engine {
-    fn default() -> Engine {
+impl Default for Engine<NoCollisionResponseHook> {
+    fn default() -> Engine<NoCollisionResponseHook> {
         Engine::new()
     }
 }
 
-impl Engine {
-    pub fn new() -> Engine {
+impl Engine<NoCollisionResponseHook> {
+    pub fn new() -> Engine<NoCollisionResponseHook> {
         Engine {
             bodies: Vec::new(),
             constraints: Vec::new(),
@@ -373,6 +422,23 @@ impl Engine {
             position_iterations: 6,
             velocity_iterations: 4,
             constraint_iterations: 2,
+            collision_response_hook: NoCollisionResponseHook,
+        }
+    }
+}
+
+impl<H: CollisionResponseHook> Engine<H> {
+    pub fn with_collision_response_hook<NH: CollisionResponseHook>(self, hook: NH) -> Engine<NH> {
+        Engine {
+            bodies: self.bodies,
+            constraints: self.constraints,
+            pairs: self.pairs,
+            gravity: self.gravity,
+            timing: self.timing,
+            position_iterations: self.position_iterations,
+            velocity_iterations: self.velocity_iterations,
+            constraint_iterations: self.constraint_iterations,
+            collision_response_hook: hook,
         }
     }
 
@@ -413,10 +479,21 @@ impl Engine {
         let timestamp = self.timing.timestamp;
         self.pairs.update(collisions, &self.bodies, timestamp);
 
+        for pair in self.pairs.table.values_mut() {
+            if !pair.is_active {
+                continue;
+            }
+            pair.collision_response_policy = self.collision_response_hook.response_for_pair(
+                CollisionHookPair {
+                body_a: pair.collision.parent_a.0,
+                body_b: pair.collision.parent_b.0,
+            });
+        }
+
         // Collision events (start)
         if !self.pairs.collision_start.is_empty() {
             events.push(PhysicsEvent::CollisionStart {
-                pairs: self.pairs.collision_start.clone(),
+                pairs: self.collision_event_pairs(&self.pairs.collision_start),
             });
         }
 
@@ -448,12 +525,17 @@ impl Engine {
         // Collision events (active + end)
         if !self.pairs.collision_active.is_empty() {
             events.push(PhysicsEvent::CollisionActive {
-                pairs: self.pairs.collision_active.clone(),
+                pairs: self.collision_event_pairs(&self.pairs.collision_active),
             });
         }
         if !self.pairs.collision_end.is_empty() {
             events.push(PhysicsEvent::CollisionEnd {
-                pairs: self.pairs.collision_end.clone(),
+                pairs: self
+                    .pairs
+                    .collision_end_pairs
+                    .iter()
+                    .map(Self::collision_event_pair_from_pair)
+                    .collect(),
             });
         }
 
@@ -466,6 +548,26 @@ impl Engine {
     fn detect_collisions(&self) -> Vec<CollisionResult> {
         let mut refs: Vec<&Body> = self.bodies.iter().collect();
         Detector::collisions(&mut refs, &self.pairs)
+    }
+
+    fn collision_event_pairs(&self, pair_ids: &[(usize, usize)]) -> Vec<CollisionEventPair> {
+        pair_ids
+            .iter()
+            .filter_map(|id| {
+                self.pairs
+                    .table
+                    .get(id)
+                    .map(Self::collision_event_pair_from_pair)
+            })
+            .collect()
+    }
+
+    fn collision_event_pair_from_pair(pair: &crate::collision::Pair) -> CollisionEventPair {
+        CollisionEventPair {
+            body_a: pair.collision.parent_a.0,
+            body_b: pair.collision.parent_b.0,
+            normal: pair.collision.normal,
+        }
     }
 
     fn apply_gravity(bodies: &mut [Body], gravity: &Gravity) {
@@ -508,10 +610,237 @@ impl Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{Arc, Mutex};
     use crate::body::BodyHandle;
     use crate::constraint::{Constraint, ConstraintOptions};
     use crate::geometry::Vec2;
     use serde_json::Value;
+
+    struct RecordingCollisionHook {
+        seen_pair: Arc<Mutex<Option<(usize, usize)>>>,
+    }
+
+    impl CollisionResponseHook for RecordingCollisionHook {
+        fn response_for_pair(&mut self, pair: CollisionHookPair) -> CollisionResponsePolicy {
+            *self.seen_pair.lock().unwrap() = Some((pair.body_a, pair.body_b));
+            CollisionResponsePolicy::Default
+        }
+    }
+
+    struct SkipVelocityHook;
+
+    impl CollisionResponseHook for SkipVelocityHook {
+        fn response_for_pair(&mut self, _pair: CollisionHookPair) -> CollisionResponsePolicy {
+            CollisionResponsePolicy::SkipVelocity
+        }
+    }
+
+    #[test]
+    fn engine_collision_end_event_exposes_body_ids_and_normal() {
+        let mut engine = Engine::new();
+        engine.gravity = Gravity { x: 0.0, y: 0.0, scale: 0.0 };
+
+        let mut body_a = Body::new(BodyHandle(0));
+        body_a.set_position(Vec2 { x: -10.0, y: 0.0 }, false);
+
+        let mut body_b = Body::new(BodyHandle(1));
+        body_b.set_position(Vec2 { x: 10.0, y: 0.0 }, false);
+
+        engine.add_body(body_a);
+        engine.add_body(body_b);
+
+        let _ = engine.update(BASE_DELTA);
+
+        engine.bodies[1].set_position(Vec2 { x: 200.0, y: 0.0 }, false);
+
+        let events = engine.update(BASE_DELTA);
+        let ended_pair = events
+            .into_iter()
+            .find_map(|event| match event {
+                PhysicsEvent::CollisionEnd { pairs } => pairs.into_iter().next(),
+                _ => None,
+            })
+            .expect("expected collision end pair");
+
+        assert_eq!((ended_pair.body_a, ended_pair.body_b), (0, 1));
+        assert!(ended_pair.normal.x < 0.0);
+        assert_eq!(ended_pair.normal.y, 0.0);
+    }
+
+    #[test]
+    fn engine_collision_active_event_data_is_enough_to_reproduce_sc2_blazer_human_bounce() {
+        let data = load_sc2_collision_scenario();
+        let scenario = &data["scenario"];
+        let bodies = scenario["bodies"].as_array().unwrap();
+        let expected_normal = &scenario["expected_collision_normal"];
+        let expected_bounce = &data["expected_sc2_bounce"];
+
+        let mut engine = Engine::new();
+        engine.gravity = Gravity {
+            x: scenario["gravity"]["x"].as_f64().unwrap(),
+            y: scenario["gravity"]["y"].as_f64().unwrap(),
+            scale: scenario["gravity"]["scale"].as_f64().unwrap(),
+        };
+
+        for body_data in bodies {
+            let body_id = body_data["body_id"].as_u64().unwrap() as usize;
+            let mut body = Body::new(BodyHandle(body_id));
+            body.set_position(
+                Vec2 {
+                    x: body_data["x"].as_f64().unwrap(),
+                    y: body_data["y"].as_f64().unwrap(),
+                },
+                false,
+            );
+            body.set_velocity(Vec2 {
+                x: body_data["vx"].as_f64().unwrap(),
+                y: body_data["vy"].as_f64().unwrap(),
+            });
+            body.set_mass(body_data["mass"].as_f64().unwrap());
+            engine.add_body(body);
+        }
+
+        let mut engine = engine.with_collision_response_hook(SkipVelocityHook);
+
+        let active_pair = (0..20).find_map(|_| {
+            let events = engine.update(BASE_DELTA);
+            events.into_iter().find_map(|event| match event {
+                PhysicsEvent::CollisionActive { pairs } => pairs.into_iter().next(),
+                _ => None,
+            })
+        }).expect("expected collision active pair");
+
+        assert_eq!((active_pair.body_a, active_pair.body_b), (0, 1));
+        assert_f64_eq(
+            active_pair.normal.x.abs(),
+            expected_normal["x"].as_f64().unwrap(),
+            "active_pair.normal.x.abs",
+        );
+        assert_f64_eq(
+            active_pair.normal.y,
+            expected_normal["y"].as_f64().unwrap(),
+            "active_pair.normal.y",
+        );
+
+        let blazer = &bodies[active_pair.body_a];
+        let human = &bodies[active_pair.body_b];
+        let (blazer_velocity, human_velocity) =
+            apply_elastic_bounce_from_collision_data(&active_pair, blazer, human);
+
+        assert_f64_eq(
+            blazer_velocity.x,
+            expected_bounce["player"]["vx"].as_f64().unwrap(),
+            "blazer_velocity.x",
+        );
+        assert_f64_eq(
+            blazer_velocity.y,
+            expected_bounce["player"]["vy"].as_f64().unwrap(),
+            "blazer_velocity.y",
+        );
+        assert_f64_eq(
+            human_velocity.x,
+            expected_bounce["target"]["vx"].as_f64().unwrap(),
+            "human_velocity.x",
+        );
+        assert_f64_eq(
+            human_velocity.y,
+            expected_bounce["target"]["vy"].as_f64().unwrap(),
+            "human_velocity.y",
+        );
+    }
+
+    #[test]
+    fn engine_collision_active_event_exposes_body_ids_and_normal_for_skip_velocity_pair() {
+        let mut engine = Engine::new();
+        engine.gravity = Gravity { x: 0.0, y: 0.0, scale: 0.0 };
+
+        let mut body_a = Body::new(BodyHandle(0));
+        body_a.set_position(Vec2 { x: -50.0, y: 0.0 }, false);
+        body_a.set_velocity(Vec2 { x: 5.0, y: 0.0 });
+
+        let mut body_b = Body::new(BodyHandle(1));
+        body_b.set_position(Vec2 { x: 50.0, y: 0.0 }, false);
+        body_b.set_velocity(Vec2 { x: -5.0, y: 0.0 });
+
+        engine.add_body(body_a);
+        engine.add_body(body_b);
+        let mut engine = engine.with_collision_response_hook(SkipVelocityHook);
+
+        let mut active_pair = None;
+        for _ in 0..20 {
+            let events = engine.update(BASE_DELTA);
+            active_pair = events.into_iter().find_map(|event| match event {
+                PhysicsEvent::CollisionActive { pairs } => pairs.into_iter().next(),
+                _ => None,
+            });
+            if active_pair.is_some() {
+                break;
+            }
+        }
+
+        let active_pair = active_pair.expect("expected collision active pair");
+        assert_eq!((active_pair.body_a, active_pair.body_b), (0, 1));
+        assert!(active_pair.normal.x < 0.0);
+        assert_eq!(active_pair.normal.y, 0.0);
+    }
+
+    #[test]
+    fn engine_calls_registered_collision_hook_for_a_detected_pair() {
+        let mut engine = Engine::new();
+        engine.gravity = Gravity { x: 0.0, y: 0.0, scale: 0.0 };
+
+        let mut body_a = Body::new(BodyHandle(0));
+        body_a.set_position(Vec2 { x: -50.0, y: 0.0 }, false);
+        body_a.set_velocity(Vec2 { x: 5.0, y: 0.0 });
+
+        let mut body_b = Body::new(BodyHandle(1));
+        body_b.set_position(Vec2 { x: 50.0, y: 0.0 }, false);
+        body_b.set_velocity(Vec2 { x: -5.0, y: 0.0 });
+
+        engine.add_body(body_a);
+        engine.add_body(body_b);
+
+        let seen_pair = Arc::new(Mutex::new(None));
+        let mut engine = engine.with_collision_response_hook(RecordingCollisionHook {
+            seen_pair: Arc::clone(&seen_pair),
+        });
+
+        for _ in 0..20 {
+            engine.update(BASE_DELTA);
+        }
+
+        assert_eq!(*seen_pair.lock().unwrap(), Some((0, 1)));
+    }
+
+    #[test]
+    fn engine_skip_velocity_policy_keeps_collision_without_matter_bounce() {
+        let mut engine = Engine::new();
+        engine.gravity = Gravity { x: 0.0, y: 0.0, scale: 0.0 };
+
+        let mut body_a = Body::new(BodyHandle(0));
+        body_a.set_position(Vec2 { x: -50.0, y: 0.0 }, false);
+        body_a.set_velocity(Vec2 { x: 5.0, y: 0.0 });
+
+        let mut body_b = Body::new(BodyHandle(1));
+        body_b.set_position(Vec2 { x: 50.0, y: 0.0 }, false);
+        body_b.set_velocity(Vec2 { x: -5.0, y: 0.0 });
+
+        engine.add_body(body_a);
+        engine.add_body(body_b);
+        let mut engine = engine.with_collision_response_hook(SkipVelocityHook);
+
+        let mut collision_started = false;
+        for _ in 0..20 {
+            let events = engine.update(BASE_DELTA);
+            if events.iter().any(|event| matches!(event, PhysicsEvent::CollisionStart { .. })) {
+                collision_started = true;
+            }
+        }
+
+        assert!(collision_started);
+        assert!(engine.bodies[0].velocity.x > 0.0);
+        assert!(engine.bodies[1].velocity.x < 0.0);
+    }
 
     const EPSILON: f64 = 1e-10;
 
@@ -519,6 +848,52 @@ mod tests {
         let path = concat!(env!("CARGO_MANIFEST_DIR"), "/testdata/engine.json");
         let content = std::fs::read_to_string(path).expect("Failed to read engine.json");
         serde_json::from_str(&content).expect("Failed to parse engine.json")
+    }
+
+    fn load_sc2_collision_scenario() -> Value {
+        let path = "/home/gsenden/projects/battlecontrol/testdata/matter-sc2-blazer-human-collision.json";
+        let content = std::fs::read_to_string(path)
+            .expect("Failed to read matter-sc2-blazer-human-collision.json");
+        serde_json::from_str(&content)
+            .expect("Failed to parse matter-sc2-blazer-human-collision.json")
+    }
+
+    fn apply_elastic_bounce_from_collision_data(
+        pair: &CollisionEventPair,
+        body_a: &Value,
+        body_b: &Value,
+    ) -> (Vec2, Vec2) {
+        let mass_a = body_a["mass"].as_f64().unwrap();
+        let mass_b = body_b["mass"].as_f64().unwrap();
+        let velocity_a = Vec2 {
+            x: body_a["vx"].as_f64().unwrap(),
+            y: body_a["vy"].as_f64().unwrap(),
+        };
+        let velocity_b = Vec2 {
+            x: body_b["vx"].as_f64().unwrap(),
+            y: body_b["vy"].as_f64().unwrap(),
+        };
+        let relative_velocity = Vec2 {
+            x: velocity_a.x - velocity_b.x,
+            y: velocity_a.y - velocity_b.y,
+        };
+        let normal_speed =
+            relative_velocity.x * pair.normal.x + relative_velocity.y * pair.normal.y;
+
+        let velocity_a = Vec2 {
+            x: velocity_a.x
+                - (2.0 * mass_b / (mass_a + mass_b)) * normal_speed * pair.normal.x,
+            y: velocity_a.y
+                - (2.0 * mass_b / (mass_a + mass_b)) * normal_speed * pair.normal.y,
+        };
+        let velocity_b = Vec2 {
+            x: velocity_b.x
+                + (2.0 * mass_a / (mass_a + mass_b)) * normal_speed * pair.normal.x,
+            y: velocity_b.y
+                + (2.0 * mass_a / (mass_a + mass_b)) * normal_speed * pair.normal.y,
+        };
+
+        (velocity_a, velocity_b)
     }
 
     fn assert_f64_eq(actual: f64, expected: f64, label: &str) {
@@ -643,6 +1018,7 @@ mod tests {
             assert_body_matches(&engine.bodies[1], &expected["bodyB"], &format!("tick{i}.bodyB"));
         }
     }
+
 
     #[test]
     fn engine_constraint() {

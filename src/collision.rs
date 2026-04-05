@@ -1,5 +1,6 @@
 use crate::body::{Body, BodyHandle, CollisionFilter};
 use crate::geometry::{Vec2, Vertices};
+use crate::engine::CollisionResponsePolicy;
 
 #[derive(Debug, Clone)]
 pub struct Contact {
@@ -237,6 +238,7 @@ pub struct Pair {
     pub friction_static: f64,
     pub restitution: f64,
     pub slop: f64,
+    pub collision_response_policy: CollisionResponsePolicy,
 }
 
 impl Pair {
@@ -261,6 +263,7 @@ impl Pair {
             friction_static: 0.0,
             restitution: 0.0,
             slop: 0.0,
+            collision_response_policy: CollisionResponsePolicy::Default,
             collision,
         };
         pair.update_from_bodies(bodies);
@@ -314,6 +317,7 @@ pub struct Pairs {
     pub collision_start: Vec<(usize, usize)>,
     pub collision_active: Vec<(usize, usize)>,
     pub collision_end: Vec<(usize, usize)>,
+    pub collision_end_pairs: Vec<Pair>,
 }
 
 impl Pairs {
@@ -325,6 +329,7 @@ impl Pairs {
         self.collision_start.clear();
         self.collision_active.clear();
         self.collision_end.clear();
+        self.collision_end_pairs.clear();
 
         for collision in collisions {
             let id = pair_id(collision.body_a, collision.body_b);
@@ -352,7 +357,9 @@ impl Pairs {
 
         for id in &ended {
             self.collision_end.push(*id);
-            self.table.remove(id);
+            if let Some(pair) = self.table.remove(id) {
+                self.collision_end_pairs.push(pair);
+            }
         }
     }
 
@@ -361,6 +368,7 @@ impl Pairs {
         self.collision_start.clear();
         self.collision_active.clear();
         self.collision_end.clear();
+        self.collision_end_pairs.clear();
     }
 }
 
