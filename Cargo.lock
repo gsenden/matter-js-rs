@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "matter-js-rs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "indexmap",
  "serde",
@@ -63,7 +63,7 @@ dependencies = [
 
 [[package]]
 name = "matter-wasm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "matter-js-rs",
  "serde",
